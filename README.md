@@ -2,9 +2,6 @@
 
 Aetherium is a powerful, self-hosted, and collaborative writing environment designed for authors, developers, and researchers. It combines a real-time collaborative editor with a customizable "Guild" of local-first AI agents to assist in every phase of the writing process—from brainstorming and drafting to refining and organizing.
 
-![Aetherium Screenshot](placeholder.png) 
-*(Note: You should take a screenshot of your app in dark mode and replace `placeholder.png` with it!)*
-
 ---
 
 ## ✨ Core Features
