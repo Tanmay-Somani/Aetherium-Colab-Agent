@@ -1,0 +1,23 @@
+{
+  "name": "aetherium",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^7.1.2"
+  },
+  "dependencies": {
+    "@liveblocks/client": "^3.6.0",
+    "@liveblocks/yjs": "^3.6.0",
+    "@tiptap/core": "^2.1.12",
+    "@tiptap/extension-collaboration": "^2.1.12",
+    "@tiptap/extension-collaboration-cursor": "^2.1.12",
+    "@tiptap/starter-kit": "^2.1.12",
+    "yjs": "^13.6.27"
+  }
+}

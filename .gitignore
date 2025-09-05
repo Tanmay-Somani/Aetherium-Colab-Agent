@@ -1,0 +1,5 @@
+.env
+/node_modules
+/aetherium-backend/venv
+/aetherium-backend/__pycache__/
+/aetherium-backend/aetherium-memory
