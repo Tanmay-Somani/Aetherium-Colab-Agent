@@ -1,24 +1,25 @@
-# auth.py
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from jose import JWTError, jwt
 from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel
+from passlib.context import CryptContext
 
 import models, schemas
 from database import SessionLocal
 
-# --- Configuration ---
-# In a real app, these should be loaded from a .env file
-SECRET_KEY = "a_very_secret_key_for_aetherium" # Replace with a long, random string
+SECRET_KEY = "a_very_secret_key_for_aetherium"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-# This tells FastAPI where to look for the token
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-# --- Pydantic Schemas ---
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -26,7 +27,6 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: str | None = None
 
-# --- Helper Functions ---
 async def get_db():
     async with SessionLocal() as session:
         yield session
@@ -59,7 +59,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
         token_data = TokenData(email=email)
     except JWTError:
         raise credentials_exception
-    user = await get_user(db, email=token_data.email)
-    if user is None:
+    
+    user_from_db = await get_user(db, email=token_data.email)
+    if user_from_db is None:
         raise credentials_exception
-    return user
+    
+    return schemas.UserOut.from_orm(user_from_db)

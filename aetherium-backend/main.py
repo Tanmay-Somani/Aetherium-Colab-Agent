@@ -4,33 +4,55 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import timedelta
+from contextlib import asynccontextmanager
+import hashlib
+from pydantic import BaseModel
+from typing import List
 
 import models, schemas, auth
 from database import engine, SessionLocal
 from memory_manager import add_to_memory, retrieve_relevant_context
-from pydantic import BaseModel
-import hashlib
 
-# --- Database Initialization & Startup Event ---
 async def create_db_and_tables():
     async with engine.begin() as conn:
         await conn.run_sync(models.Base.metadata.create_all)
 
-app = FastAPI(title="Aetherium AI Agent Guild")
-@app.on_event("startup")
-async def on_startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Server starting up...")
     await create_db_and_tables()
+    
+    async with SessionLocal() as db:
+        dev_user_email = "tanmay@example.com"
+        result = await db.execute(models.User.__table__.select().where(models.User.email == dev_user_email))
+        user = result.first()
+        if not user:
+            hashed_password = auth.get_password_hash("Tanmay123")
+            dev_user = models.User(email=dev_user_email, hashed_password=hashed_password)
+            db.add(dev_user)
+            await db.commit()
+            print(f"Development user '{dev_user_email}' created.")
+    
+    yield
+    print("Server shutting down...")
 
-# --- CORS Middleware ---
-origins = ["http://localhost:5173"]
-app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app = FastAPI(title="Aetherium AI Agent Guild", lifespan=lifespan)
 
-# --- Dependency for DB session ---
+origins = [
+    "http://localhost:5173",
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 async def get_db():
     async with SessionLocal() as session:
         yield session
 
-# --- NEW: Token/Login Endpoint ---
 @app.post("/token", response_model=auth.Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
     user = await auth.get_user(db, email=form_data.username)
@@ -48,11 +70,11 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 
 @app.post("/users/", response_model=schemas.UserOut)
 async def create_user(user: schemas.UserCreate, db: AsyncSession = Depends(get_db)):
-    # (code for create_user is unchanged)
     result = await db.execute(models.User.__table__.select().where(models.User.email == user.email))
     db_user = result.first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
+    
     hashed_password = auth.get_password_hash(user.password)
     new_user = models.User(email=user.email, hashed_password=hashed_password)
     db.add(new_user)
@@ -60,13 +82,24 @@ async def create_user(user: schemas.UserCreate, db: AsyncSession = Depends(get_d
     await db.refresh(new_user)
     return new_user
 
-# --- AI Agent Logic ---
+@app.post("/log-event/")
+async def log_event(log_data: List[schemas.LogCreate], db: AsyncSession = Depends(get_db)):
+    import json
+    for log_item in log_data:
+        new_log = models.Log(
+            session_id=log_item.session_id,
+            event_type=log_item.event_type,
+            payload=json.dumps(log_item.payload)
+        )
+        db.add(new_log)
+    await db.commit()
+    return {"status": f"{len(log_data)} events logged"}
+
 class AgentRequest(BaseModel):
     html: str
     task: str
 
 def run_suggestion_agent_with_memory(content: str) -> str:
-    """The Brainstormer, now with long-term memory."""
     print("Delegating to Suggestion Agent with Memory...")
     context_chunks = retrieve_relevant_context(content)
     context_str = "\n".join(context_chunks)
@@ -81,7 +114,6 @@ def run_suggestion_agent_with_memory(content: str) -> str:
     return response['message']['content']
 
 def run_improvement_agent(content: str) -> str:
-    """The Technical Editor."""
     print("Delegating to Improvement Agent...")
     response = ollama.chat(
         model='phi3:mini',
@@ -93,7 +125,6 @@ def run_improvement_agent(content: str) -> str:
     return response['message']['content']
 
 def run_librarian_agent(content: str) -> str:
-    """The Researcher."""
     print("Delegating to Librarian Agent...")
     response = ollama.chat(
         model='phi3:mini',
@@ -105,7 +136,6 @@ def run_librarian_agent(content: str) -> str:
     return response['message']['content']
 
 def run_reviewer_agent(content: str) -> str:
-    """The Critic."""
     print("Delegating to Reviewer Agent...")
     response = ollama.chat(
         model='phi3:mini',
@@ -116,8 +146,6 @@ def run_reviewer_agent(content: str) -> str:
     )
     return response['message']['content']
 
-# --- Router Agent Endpoint ---
-## FIX: Changed to `async def` for consistency
 @app.post("/agent-request")
 async def router_agent(request: AgentRequest, current_user: schemas.UserOut = Depends(auth.get_current_user)):
     print(f"Router received task: '{request.task}' from user: {current_user.email}")
@@ -143,7 +171,6 @@ async def router_agent(request: AgentRequest, current_user: schemas.UserOut = De
         print(f"Error during agent request: {e}")
         return {"message": "Error", "response": "An error occurred in the backend."}
 
-# --- Optional Root Endpoint for testing ---
 @app.get("/")
 def read_root():
     return {"status": "Aetherium Backend is running!"}
