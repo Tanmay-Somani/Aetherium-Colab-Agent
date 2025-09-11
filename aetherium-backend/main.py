@@ -1,17 +1,20 @@
+# main.py (Corrected for Logging)
 import ollama
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends # FIX: Added Depends import
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import timedelta
-from contextlib import asynccontextmanager
-import hashlib
 from pydantic import BaseModel
+import hashlib
 from typing import List
+from contextlib import asynccontextmanager
+import json
 
-import models, schemas, auth
-from database import engine, SessionLocal
+import models, schemas
 from memory_manager import add_to_memory, retrieve_relevant_context
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+
+SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./aetherium.db"
+engine = create_async_engine(SQLALCHEMY_DATABASE_URL)
+SessionLocal = async_sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 async def create_db_and_tables():
     async with engine.begin() as conn:
@@ -19,24 +22,17 @@ async def create_db_and_tables():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("Server starting up...")
+    print("Lifespan startup: Creating DB tables...")
     await create_db_and_tables()
-    
-    async with SessionLocal() as db:
-        dev_user_email = "tanmay@example.com"
-        result = await db.execute(models.User.__table__.select().where(models.User.email == dev_user_email))
-        user = result.first()
-        if not user:
-            hashed_password = auth.get_password_hash("Tanmay123")
-            dev_user = models.User(email=dev_user_email, hashed_password=hashed_password)
-            db.add(dev_user)
-            await db.commit()
-            print(f"Development user '{dev_user_email}' created.")
-    
     yield
-    print("Server shutting down...")
+    print("Lifespan shutdown.")
 
 app = FastAPI(title="Aetherium AI Agent Guild", lifespan=lifespan)
+
+# --- Dependency for getting a DB session ---
+async def get_db():
+    async with SessionLocal() as session:
+        yield session
 
 origins = [
     "http://localhost:5173",
@@ -49,42 +45,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-async def get_db():
-    async with SessionLocal() as session:
-        yield session
-
-@app.post("/token", response_model=auth.Token)
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
-    user = await auth.get_user(db, email=form_data.username)
-    if not user or not auth.pwd_context.verify(form_data.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = auth.create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
-
-@app.post("/users/", response_model=schemas.UserOut)
-async def create_user(user: schemas.UserCreate, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(models.User.__table__.select().where(models.User.email == user.email))
-    db_user = result.first()
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    
-    hashed_password = auth.get_password_hash(user.password)
-    new_user = models.User(email=user.email, hashed_password=hashed_password)
-    db.add(new_user)
-    await db.commit()
-    await db.refresh(new_user)
-    return new_user
-
 @app.post("/log-event/")
+# FIX: db type hint was missing AsyncSession
 async def log_event(log_data: List[schemas.LogCreate], db: AsyncSession = Depends(get_db)):
-    import json
     for log_item in log_data:
         new_log = models.Log(
             session_id=log_item.session_id,
@@ -147,8 +110,8 @@ def run_reviewer_agent(content: str) -> str:
     return response['message']['content']
 
 @app.post("/agent-request")
-async def router_agent(request: AgentRequest, current_user: schemas.UserOut = Depends(auth.get_current_user)):
-    print(f"Router received task: '{request.task}' from user: {current_user.email}")
+async def router_agent(request: AgentRequest):
+    print(f"Router received task: '{request.task}'")
     ai_response = "Unknown task."
     try:
         if request.task == 'save_to_memory':

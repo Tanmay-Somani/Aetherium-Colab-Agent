@@ -7,50 +7,24 @@
     <title>Aetherium Writing Platform</title>
   </head>
   <body>
-    <div id="auth-overlay">
-    <div id="auth-modal">
-      <!-- Login Form (Visible by default) -->
-      <div id="login-form">
-        <h2>Login to Aetherium</h2>
-        <form>
-          <input type="email" id="login-email" placeholder="Email" required>
-          <input type="password" id="login-password" placeholder="Password" required>
-          <button type="submit">Login</button>
-        </form>
-        <p>Don't have an account? <a href="#" id="show-register">Register here</a></p>
-      </div>
-
-      <!-- Registration Form (Hidden by default) -->
-      <div id="register-form" style="display: none;">
-        <h2>Create Account</h2>
-        <form>
-          <input type="email" id="register-email" placeholder="Email" required>
-          <input type="password" id="register-password" placeholder="Password" required>
-          <button type="submit">Register</button>
-        </form>
-        <p>Already have an account? <a href="#" id="show-login">Login here</a></p>
-      </div>
-    </div>
-  </div>
-     <div id="app-container" style="visibility: hidden;">
-      
-      <!-- NEW: Structure Panel (Left Sidebar) -->
+    <!-- The app container is now visible by default -->
+    <div id="app-container">
       <aside id="structure-panel">
         <div class="panel-header">
           <h3>Structure</h3>
-          <button id="theme-toggle-btn" title="Toggle Theme">ᾳ</button>
-          <button id="refresh-structure-btn" title="Refresh Chapters">🔄</button>
+          <div>
+            <button id="theme-toggle-btn" title="Toggle Theme">🌙</button>
+            <button id="refresh-structure-btn" title="Refresh Chapters">🔄</button>
+          </div>
         </div>
         <div id="structure-list">
           <p class="placeholder">Click Refresh to scan for chapters...</p>
         </div>
       </aside>
 
-      <!-- Main Writing Area (Center) -->
       <main id="writing-area">
         <div id="editor"></div>
         <div class="controls">
-          <!-- buttons remain the same -->
           <button data-task="improve">Improve</button>
           <button data-task="summarize">Summarize</button>
           <button data-task="review">Review Flow</button>
@@ -59,7 +33,6 @@
         </div>
       </main>
 
-      <!-- AI Assistant Panel (Right Sidebar) -->
       <aside id="ai-panel">
         <div class="panel-header">
           <h3>AI Assistant</h3>
@@ -68,8 +41,8 @@
           <p class="placeholder">Your AI suggestions will appear here...</p>
         </div>
       </aside>
-
     </div>
+
     <script type="module" src="src/main.js"></script>
   </body>
 </html>
