@@ -4,24 +4,24 @@ Aetherium is a powerful, self-hosted, and collaborative writing environment desi
 
 ---
 
-## ✨ Core Features
+##  Core Features
 
-*   **👥 Real-Time Collaboration:** Write and edit with multiple users simultaneously, with changes synced instantly across all clients.
-*   **🧠 AI Agent Guild:** A modular, multi-agent system powered by local LLMs (via Ollama) to handle specialized tasks:
+*   **Real-Time Collaboration:** Write and edit with multiple users simultaneously, with changes synced instantly across all clients.
+*   **AI Agent Guild:** A modular, multi-agent system powered by local LLMs (via Ollama) to handle specialized tasks:
     *   **Suggestion Agent:** Your creative partner for brainstorming ideas.
     *   **Improvement Agent:** A meticulous editor for refining prose and code.
     *   **Librarian Agent:** Your research assistant for summarizing content.
     *   **Reviewer Agent:** Provides high-level feedback on clarity and flow.
-*   **📚 Long-Term Memory:** Utilizes a vector database (ChromaDB) to give the AI contextual awareness of your entire project, leading to smarter, more relevant suggestions.
-*   **✍️ Selective Editing:** Improve an entire document or just a single highlighted sentence for surgical precision.
-*   **📂 Structuralist Panel:** Automatically generates a navigable "Table of Contents" from your document's headings.
-*   **🕵️ The Chronicler:** A comprehensive logging system that records every interaction, keystroke, and button click to a local database for behavior analysis.
-*   **🔒 Local First & Private:** All core components—including the AI models and databases—run locally on your machine. Your data never leaves your control.
-*   **🎨 Themed UI:** Includes a polished user interface with a persistent dark mode toggle.
+*   **Long-Term Memory:** Utilizes a vector database (ChromaDB) to give the AI contextual awareness of your entire project, leading to smarter, more relevant suggestions.
+*   **Selective Editing:** Improve an entire document or just a single highlighted sentence for surgical precision.
+*   **Structuralist Panel:** Automatically generates a navigable "Table of Contents" from your document's headings.
+*   **The Chronicler:** A comprehensive logging system that records every interaction, keystroke, and button click to a local database for behavior analysis.
+*   **Local First & Private:** All core components—including the AI models and databases—run locally on your machine. Your data never leaves your control.
+*   **Themed UI:** Includes a polished user interface with a persistent dark mode toggle.
 
 ---
 
-## 🛠️ Technology Stack
+## 🛠 Technology Stack
 
 Aetherium is a full-stack application built with modern but accessible technologies.
 
@@ -41,7 +41,7 @@ Aetherium is a full-stack application built with modern but accessible technolog
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 Follow these steps to get Aetherium running on your local machine.
 
