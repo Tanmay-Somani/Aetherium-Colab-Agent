@@ -10,6 +10,7 @@ import json
 
 import models, schemas
 from memory_manager import add_to_memory, retrieve_relevant_context
+
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./aetherium.db"
