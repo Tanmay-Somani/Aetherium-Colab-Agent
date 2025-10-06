@@ -21,7 +21,7 @@ Aetherium is a powerful, self-hosted, and collaborative writing environment desi
 
 ---
 
-## 🛠 Technology Stack
+## Technology Stack
 
 Aetherium is a full-stack application built with modern but accessible technologies.
 
